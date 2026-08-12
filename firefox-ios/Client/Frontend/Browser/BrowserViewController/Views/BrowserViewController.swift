@@ -264,6 +264,8 @@ class BrowserViewController: UIViewController,
     // MARK: Contextual Hints
 
     var navigationHintDoubleTapTimer: Timer?
+    var googleLensTipObservationTask: Task<Void, Never>?
+    weak var googleLensTipViewController: UIViewController?
     private(set) lazy var navigationContextHintVC: ContextualHintViewController = {
         let navigationViewProvider = ContextualHintViewProvider(forHintType: .navigation, with: profile)
         return ContextualHintViewController(with: navigationViewProvider, windowUUID: windowUUID)
@@ -505,6 +507,7 @@ class BrowserViewController: UIViewController,
             logger.log("BVC deallocating (window: \(windowUUID))", level: .info, category: .lifecycle)
             unsubscribeFromRedux()
             stopObservingAllWebViews()
+            googleLensTipObservationTask?.cancel()
         }
     }
 
@@ -765,6 +768,11 @@ class BrowserViewController: UIViewController,
         appMenuBadgeUpdate()
         updateTopTabs(showTopTabs: showTopTabs)
         updateToolbarDisplay(shouldUpdateBlurViews: shouldUpdateBlurViews)
+
+        // update keyboard's related view constraints if is visible 
+        if keyboardState != nil {
+            updateConstraintsForKeyboard()
+        }
     }
 
     private func updateSwipingTabs() {
@@ -1819,8 +1827,7 @@ class BrowserViewController: UIViewController,
     }
 
     private func getKeyboardSpacerHeight(keyboardHeight: CGFloat) -> CGFloat {
-        let showNavToolbar = toolbarHelper.shouldShowNavigationToolbar(for: traitCollection)
-        let toolBarHeight = showNavToolbar ? UIConstants.BottomToolbarHeight : 0
+        let toolBarHeight = navigationToolbarContainer.isHidden ? 0 : UIConstants.BottomToolbarHeight
         let spacerHeight = keyboardHeight - toolBarHeight
         return spacerHeight
     }
@@ -2789,8 +2796,6 @@ class BrowserViewController: UIViewController,
             showZeroSearchView()
         case .shortcutsLibrary:
             navigationHandler?.showShortcutsLibrary()
-        case .worldCupCountryPicker:
-            navigationHandler?.showWorldCupCountryPicker()
         case .quickAnswers(let transitionType):
             navigationHandler?.showQuickAnswers(transitionType: transitionType)
         case .privacyNoticeLink(let url):
@@ -3048,6 +3053,7 @@ class BrowserViewController: UIViewController,
             updateDisplayedPopoverProperties = setupPopover
         }
 
+        alert.applyNovaActionTint(themeManager.getCurrentTheme(for: windowUUID))
         present(alert, animated: true)
     }
 
@@ -3241,8 +3247,8 @@ class BrowserViewController: UIViewController,
         let availableContentHeight = getAvailableHomepageContentHeight()
         let availableWallpaperHeight = getAvailableHomepageWallpaperHeight(availableContentHeight: availableContentHeight)
 
-        guard homepageState.availableContentHeight != availableContentHeight
-              || homepageState.availableWallpaperHeight != availableWallpaperHeight
+        guard homepageState.wallpaperState.availableContentHeight != availableContentHeight
+              || homepageState.wallpaperState.availableWallpaperHeight != availableWallpaperHeight
         else { return }
 
         store.dispatch(
@@ -4066,6 +4072,8 @@ class BrowserViewController: UIViewController,
             configureSummarizeToolbarEntryContextualHint(for: button)
         case ContextualHintType.translation.rawValue:
             configureTranslationContextualHint(for: button)
+        case TipKitHintType.googleLens.rawValue:
+            configureGoogleLensTip(for: button)
         default:
             return
         }

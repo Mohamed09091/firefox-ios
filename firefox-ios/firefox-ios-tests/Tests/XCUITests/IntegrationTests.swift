@@ -14,7 +14,9 @@ private let loginEntry = "https://accounts.google.com"
 private let tabOpenInDesktop = "https://example.com/"
 
 class IntegrationTests: BaseTestCase {
-    let testWithDB = ["testFxASyncHistory"]
+    var browserScreen: BrowserScreen!
+
+    let testWithDB = ["testFxASyncHistory", "testFxAFirefoxSuggest"]
     let testFxAChinaServer = ["testFxASyncPageUsingChinaFxA"]
     let testModernKitOnboarding = ["testModernKitOnboardingStartSyncingUseEmailInstead"]
 
@@ -49,6 +51,7 @@ class IntegrationTests: BaseTestCase {
         }
         launchArguments.append(LaunchArguments.DisableAnimations)
         try await super.setUp()
+        browserScreen = BrowserScreen(app: app)
     }
 
     func allowNotifications() {
@@ -302,6 +305,35 @@ class IntegrationTests: BaseTestCase {
         app.swipeDown()
         mozWaitForElementToExist(app.tables.otherElements["profile1"])
         XCTAssertTrue(app.tables.staticTexts[tabOpenInDesktop].exists, "The tab is not synced")
+    }
+
+    // https://mozilla.testrail.io/index.php?/cases/view/2576803
+    // [Config] orientation:portrait, orientation:landscape 
+    // Smoketest
+    func testFxATabsFirefoxSuggest() {
+        // Precondition: Sign into Mozilla Account
+        signInFxAccounts()
+        waitForInitialSyncComplete()
+        navigator.nowAt(SettingsScreen)
+        navigator.goto(HomePanelsScreen)
+
+        // Firefox Suggest and Google Search
+        // Synced tab: example.com/
+        let siteTable = app.tables["SiteTable"]
+        for orientation in [UIDeviceOrientation.portrait, UIDeviceOrientation.landscapeLeft] {
+            XCUIDevice.shared.orientation = orientation
+            browserScreen.tapOnAddressBar()
+            browserScreen.tapClearButtonIfExists()
+            browserScreen.typeOnSearchBar(text: "exam")
+            mozWaitForElementToExist(app.scrollViews.buttons["Search Settings"])
+            mozWaitForElementToExist(siteTable.otherElements["Google Search"])
+            // Firefox Suggest is displayed
+            if XCUIDevice.shared.orientation == UIDeviceOrientation.landscapeLeft {
+                siteTable.cells.firstMatch.swipeUp()
+            }
+            mozWaitForElementToExist(siteTable.otherElements["Firefox Suggest"])
+            mozWaitForElementToExist(siteTable.staticTexts["Example Domain"])
+        }
     }
 
     // https://mozilla.testrail.io/index.php?/cases/view/2306822
