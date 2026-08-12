@@ -42,6 +42,7 @@ def test_sync_disconnect_connect_fxa(tps, xcodebuild):
 def test_sync_china_fxa_server(xcodebuild):
     xcodebuild.test('XCUITests/IntegrationTests/testFxASyncPageUsingChinaFxA')
 
+# Regression
 def test_modern_kit_onboarding_start_syncing_use_email_instead(xcodebuild):
     xcodebuild.test('XCUITests/IntegrationTests/testModernKitOnboardingStartSyncingUseEmailInstead')
 
