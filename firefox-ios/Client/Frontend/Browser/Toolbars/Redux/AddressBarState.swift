@@ -62,13 +62,14 @@ struct AddressBarState: StateType, Sendable, Equatable {
         actionType: .googleLens,
         iconName: StandardImageIdentifiers.Medium.logoGoogleLens,
         isEnabled: true,
+        contextualHintType: TipKitHintType.googleLens.rawValue,
         a11yLabel: .AddressToolbar.GoogleLens.A11yLabel,
         a11yId: AccessibilityIdentifiers.Browser.AddressToolbar.googleLensButton,
         menuElements: [
             ToolbarMenuElementConfiguration(
                 actionType: .googleLensTakePhoto,
                 title: .AddressToolbar.GoogleLens.ContextMenu.TakePhotoActionTitle,
-                imageName: StandardImageIdentifiers.Large.camera,
+                imageName: StandardImageIdentifiers.Large.screenshot,
                 a11yIdentifier: AccessibilityIdentifiers.Browser.AddressToolbar.googleLensTakePhotoAction
             ),
             ToolbarMenuElementConfiguration(
@@ -1059,7 +1060,7 @@ struct AddressBarState: StateType, Sendable, Equatable {
     private static func shareAction(enabled: Bool, hasAlternativeLocationColor: Bool) -> ToolbarActionConfiguration {
         return ToolbarActionConfiguration(
             actionType: .share,
-            iconName: StandardImageIdentifiers.Medium.share,
+            iconName: StandardImageIdentifiers.Medium.shareApple,
             isEnabled: enabled,
             hasCustomColor: !hasAlternativeLocationColor,
             a11yLabel: .TabLocationShareAccessibilityLabel,
@@ -1116,10 +1117,7 @@ struct AddressBarState: StateType, Sendable, Equatable {
                                                        hasAlternativeLocationColor: Bool) -> ToolbarActionConfiguration {
         return ToolbarActionConfiguration(
             actionType: .readerModeWithSummarizer,
-            iconName: StandardImageIdentifiers.Medium.readerView,
-            bottomBadgeImage: UIImage(
-                named: StandardImageIdentifiers.Large.lightningFill
-            )?.withRenderingMode(.alwaysTemplate),
+            iconName: StandardImageIdentifiers.Medium.readerSummarize,
             isEnabled: true,
             isSelected: isSelected,
             hasCustomColor: !hasAlternativeLocationColor,

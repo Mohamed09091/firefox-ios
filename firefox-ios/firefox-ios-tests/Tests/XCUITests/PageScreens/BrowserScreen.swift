@@ -38,6 +38,21 @@ final class BrowserScreen {
         }
     }
 
+    // Reads the adblock-tester.com score banner (e.g. "38 points out of 100 (11 services, 22
+    // checks)") and returns the leading number.
+    func adblockTesterScore(timeout: TimeInterval = TIMEOUT) -> Int {
+        let scoreElement = app.webViews.otherElements.matching(
+            NSPredicate(format: "label CONTAINS[c] 'points out of 100'")
+        ).firstMatch
+        BaseTestCase().mozWaitForElementToExist(scoreElement, timeout: timeout)
+
+        guard let match = scoreElement.label.range(of: #"^\d+"#, options: .regularExpression) else {
+            XCTFail("Could not parse a leading score number from label: \(scoreElement.label)")
+            return 0
+        }
+        return Int(scoreElement.label[match]) ?? 0
+    }
+
     func tapBackButton() {
         let backButton = sel.BACK_BUTTON.element(in: app)
         backButton.waitAndTap()
@@ -201,6 +216,22 @@ final class BrowserScreen {
         urlElement.waitAndTap()
     }
 
+    // Pastes the clipboard contents into the (already focused) address bar and asserts the resulting
+    // value. Used to verify clipboard content in-app, avoiding the iOS 16+ cross-process paste prompt.
+    func pasteAndAssertAddressBarContains(_ value: String) {
+        let pasteButton = sel.PASTE_BUTTON.element(in: app)
+        if BaseTestCase().iPad() {
+            addressBar.waitAndTap()
+        } else {
+            addressBar.press(forDuration: 1)
+        }
+        if !pasteButton.exists {
+            addressBar.press(forDuration: 1)
+        }
+        pasteButton.waitAndTap()
+        BaseTestCase().mozWaitForValueContains(addressBar, value: value)
+    }
+
     func typeOnSearchBar(text: String) {
         addressBar.typeText(text)
     }
@@ -329,6 +360,11 @@ final class BrowserScreen {
     func assertWebPageText(with text: String) {
         let text = sel.webPageElement(with: text).element(in: app)
         BaseTestCase().mozWaitForElementToExist(text)
+    }
+
+    func assertWebPageTextDoesNotExist(with text: String) {
+        let text = sel.webPageElement(with: text).element(in: app)
+        BaseTestCase().mozWaitForElementToNotExist(text)
     }
 
     func tapWebViewTextIfExists(text: String) {

@@ -99,6 +99,7 @@ public final class WebCompatReportSheetViewController: UIViewController,
         closeButton.accessibilityLabel = viewModel.closeButtonAccessibilityLabel
         previewButton.title = viewModel.previewButtonTitle
         previewButton.isEnabled = viewModel.isPreviewEnabled
+        navigationItem.rightBarButtonItem = viewModel.previewButtonTitle == nil ? nil : previewButton
         applySnapshot()
     }
 
@@ -107,7 +108,6 @@ public final class WebCompatReportSheetViewController: UIViewController,
     private func setupNavigationItem() {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.leftBarButtonItem = closeButton
-        navigationItem.rightBarButtonItem = previewButton
         navigationItem.largeTitleDisplayMode = .always
     }
 
@@ -175,6 +175,7 @@ public final class WebCompatReportSheetViewController: UIViewController,
         let subOption = subOptionCellRegistration()
         let category = categoryCellRegistration()
         let url = urlCellRegistration()
+        let details = detailsCellRegistration()
         let sendButton = sendButtonCellRegistration()
         let toggle = toggleCellRegistration()
 
@@ -189,6 +190,8 @@ public final class WebCompatReportSheetViewController: UIViewController,
                 return collectionView.dequeueConfiguredReusableCell(using: subOption, for: indexPath, item: row)
             case .urlField:
                 return collectionView.dequeueConfiguredReusableCell(using: url, for: indexPath, item: row)
+            case .detailsField:
+                return collectionView.dequeueConfiguredReusableCell(using: details, for: indexPath, item: row)
             case .sendButton:
                 return collectionView.dequeueConfiguredReusableCell(using: sendButton, for: indexPath, item: row)
             case .toggle:
@@ -262,6 +265,23 @@ public final class WebCompatReportSheetViewController: UIViewController,
         }
     }
 
+    private func detailsCellRegistration()
+    -> UICollectionView.CellRegistration<WebCompatDetailsCell, WebCompatReportViewModel.Row> {
+        return UICollectionView.CellRegistration { [weak self] cell, _, row in
+            guard let self, case let .detailsField(text, placeholder) = row.kind else { return }
+            cell.configure(
+                text: text,
+                placeholder: placeholder,
+                accessibilityLabel: row.title,
+                a11yIdentifier: row.a11yIdentifier,
+                onEditingEnded: { [weak self] text in
+                    self?.delegate?.webCompatReportSheetDidEditText(id: row.id, text: text)
+                }
+            )
+            cell.applyTheme(theme: self.theme)
+        }
+    }
+
     private func sendButtonCellRegistration()
     -> UICollectionView.CellRegistration<WebCompatSendButtonCell, WebCompatReportViewModel.Row> {
         return UICollectionView.CellRegistration { [weak self] cell, _, row in
@@ -311,6 +331,8 @@ public final class WebCompatReportSheetViewController: UIViewController,
                   let sectionID = self.dataSource.sectionIdentifier(for: indexPath.section),
                   let footer = self.sectionsByID[sectionID]?.footer else { return }
             footerView.configure(footer: footer) { [weak self] url in
+                // Text fields report on end-editing, so commit the active one before leaving the form.
+                self?.view.endEditing(true)
                 self?.delegate?.webCompatReportSheetDidTapLearnMore(url: url)
             }
             footerView.applyTheme(theme: self.theme)
