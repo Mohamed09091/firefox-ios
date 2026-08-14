@@ -21,7 +21,7 @@ final class WebCompatReporterStateTests: XCTestCase {
         XCTAssertNil(subject.selectedSubOptionID)
         XCTAssertEqual(subject.additionalDetails, "")
         XCTAssertTrue(subject.includeScreenshot)
-        XCTAssertFalse(subject.includeBlockedList)
+        XCTAssertTrue(subject.includeBlockedList)
     }
 
     func test_canPreview_falseUntilCategorySelected() {
@@ -230,7 +230,7 @@ final class WebCompatReporterStateTests: XCTestCase {
 
         let newState = reducer.legacyReducer(initialState, action)
 
-        XCTAssertTrue(newState.includeBlockedList)
+        XCTAssertFalse(newState.includeBlockedList)
     }
 
     // MARK: - didSubmit

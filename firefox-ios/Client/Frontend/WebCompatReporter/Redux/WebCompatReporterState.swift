@@ -60,7 +60,7 @@ struct WebCompatReporterState: ScreenState, Equatable {
             selectedSubOptionID: nil,
             additionalDetails: "",
             includeScreenshot: true,
-            includeBlockedList: false,
+            includeBlockedList: true,
             shouldDismiss: false,
             previewPayload: nil
         )
@@ -72,7 +72,7 @@ struct WebCompatReporterState: ScreenState, Equatable {
          selectedSubOptionID: String? = nil,
          additionalDetails: String = "",
          includeScreenshot: Bool = true,
-         includeBlockedList: Bool = false,
+         includeBlockedList: Bool = true,
          shouldDismiss: Bool = false,
          previewPayload: WebCompatReportPayload? = nil) {
         self.windowUUID = windowUUID
